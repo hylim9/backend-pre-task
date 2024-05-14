@@ -121,7 +121,6 @@ class Contacts(APIView):
                     )
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
             except Exception as e:
-                print(e)
                 raise ParseError("연락처 저장 실패")
 
         else:
@@ -192,7 +191,6 @@ class ContactsDetail(APIView):
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
             except Exception as e:
-                print(e)
                 raise ParseError(f"연락처 수정 실패: {e}")
 
         else:
@@ -313,7 +311,6 @@ class ContactsTemplate(APIView):
                     )
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
             except Exception as e:
-                print(e)
                 raise ParseError("연락처 저장 실패")
 
         else:
@@ -351,7 +348,6 @@ class ContactsDetailTemplate(APIView):
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
             except Exception as e:
-                print(e)
                 raise ParseError(f"연락처 수정 실패: {e}")
 
         else:
