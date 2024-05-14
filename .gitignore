@@ -1,0 +1,15 @@
+# python
+__pycache__/
+*.py[cod]
+db.sqlite3
+
+# IDE
+.idea/
+.vscode/
+.history/
+
+# etc
+.swp
+
+# pytest
+.pytest_cache

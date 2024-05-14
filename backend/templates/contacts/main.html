@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>연락처</title>
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <!-- Material Icon -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Round"
+      rel="stylesheet"
+    />
+    <!-- jquery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  </head>
+  <style>
+    .modal_overlay {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(70, 70, 70, 0.8);
+      backdrop-filter: blur(1.5px);
+      -webkit-backdrop-filter: blur(1.5px);
+    }
+
+    .modal_window {
+      background: white;
+      backdrop-filter: blur(13.5px);
+      -webkit-backdrop-filter: blur(13.5px);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      width: 800px;
+      height: 600px;
+      position: relative;
+      padding: 10px;
+      overflow-y: scroll;
+    }
+
+    .modal_window_label {
+      background: white;
+      backdrop-filter: blur(13.5px);
+      -webkit-backdrop-filter: blur(13.5px);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      width: 300px;
+      height: 200px;
+      position: relative;
+      padding: 10px;
+      overflow-y: scroll;
+    }
+
+    .modal_title {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .modal_title_side {
+      flex: 0 0 40px;
+      text-align: center;
+    }
+
+    .modal_body {
+      margin-top: 5px;
+    }
+  </style>
+
+  {% block body %}
+  <body>
+    <nav
+      class="navbar navbar-expand-lg bg-body-tertiary"
+      style="position: fixed; width: 100%"
+    >
+      <div class="container-fluid" style="justify-content: space-between">
+        <div>
+          <img
+            style="width: 50px"
+            src="https://oopy.lazyrockets.com/api/rest/cdn/image/0196375a-2c5d-4ccd-afd8-d5034cc2cbe0.png"
+          /><a class="navbar-brand" href="#" style="margin-left: 10px"
+            >연락처</a
+          >
+        </div>
+        <div style="display: flex; white-space: nowrap">
+          <button
+            id="add-contact"
+            style="margin-left: 5px"
+            class="btn btn-outline-secondary"
+            type="button"
+          >
+            추가
+          </button>
+        </div>
+      </div>
+    </nav>
+    <div
+      style="
+        display: flex;
+        justify-content: center;
+        padding-top: 80px;
+        overflow-y: hidden;
+      "
+    >
+      <div
+        id="table-div"
+        style="
+          border: 1px solid lightgrey;
+          border-radius: 10px;
+          padding: 10px;
+          width: 70%;
+          height: 80vh;
+          overflow-y: scroll;
+        "
+      >
+        <table
+          id="contact-table"
+          class="table table-hover text-center align-middle"
+        >
+          <thead>
+            <tr>
+              <th scope="col" style="display: none">id</th>
+              <th scope="col">프로필 사진</th>
+              <th scope="col">이름</th>
+              <th scope="col">이메일</th>
+              <th scope="col">전화번호</th>
+              <th scope="col">회사 (직책)</th>
+              <th scope="col">라벨</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for contact in contacts %}
+            <tr>
+              <td style="display: none">{{ contact.id }}</td>
+              <td>
+                <img
+                  style="
+                    object-fit: contain;
+                    width: 90px;
+                    height: 90px;
+                    background-color: lightgray;
+                    border-radius: 20px;
+                  "
+                  src="{{ contact.profile_picture }}"
+                />
+              </td>
+              <td>{{ contact.name }}</td>
+              <td>{{ contact.email }}</td>
+              <td>{{ contact.phone_number }}</td>
+              <td>{{ contact.company_role }}</td>
+              <td>
+                {% for item in contact.label %}
+                <span
+                  class="mx-1 badge text-bg-warning"
+                  style="font-weight: normal"
+                  >{{ item.name }}</span
+                >
+                {% endfor %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pagination" style="justify-content: center; margin-top: 10px">
+      <span class="step-links">
+        {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- 연락처 입력 모달 -->
+    <div id="contact-modal" class="modal_overlay">
+      <div class="modal_window">
+        <div class="modal_title">
+          <div class="modal_title_side"></div>
+          <div>연락처</div>
+          <div class="modal_title_side">
+            <button
+              id="modal-close"
+              type="button"
+              class="btn-close"
+              aria-label="Close"
+            ></button>
+          </div>
+        </div>
+        <div class="input-group mb-3 modal_body" style="display: none">
+          <input
+            id="modal-id"
+            type="number"
+            class="form-control"
+            placeholder="ID"
+            aria-label="id"
+          />
+        </div>
+        <div style="display: flex; justify-content: end; margin-top: 3px">
+          * 는 필수 입력 값입니다.
+        </div>
+        <button id="add-label" type="button" class="btn btn-success">
+          라벨 추가
+        </button>
+        <div id="label-div"></div>
+        <div class="input-group mb-3 modal_body">
+          <input
+            id="modal-profile"
+            type="text"
+            class="form-control"
+            placeholder="프로필 사진 (URL)"
+            aria-label="profile_picture"
+            required
+          />
+          <div style="margin-left: 3px; color: red">*</div>
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-name"
+            type="text"
+            class="form-control"
+            placeholder="이름"
+            aria-label="name"
+            required
+          />
+          <div style="margin-left: 3px; color: red">*</div>
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-phonenumber"
+            type="text"
+            class="form-control"
+            placeholder="전화번호"
+            aria-label="phone_number"
+            required
+            maxlength="13"
+          />
+          <div style="margin-left: 3px; color: red">*</div>
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-email"
+            type="text"
+            class="form-control"
+            placeholder="이메일"
+            aria-label="email"
+            required
+          />
+          <div style="margin-left: 3px; color: red">*</div>
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-company"
+            type="text"
+            class="form-control"
+            placeholder="회사"
+            aria-label="company"
+            required
+          />
+          <div style="margin-left: 3px; color: red">*</div>
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-jobtitle"
+            type="text"
+            class="form-control"
+            placeholder="직책"
+            aria-label="job_title"
+            required
+          />
+          <div style="margin-left: 3px; color: red">*</div>
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-memo"
+            type="text"
+            class="form-control"
+            placeholder="메모"
+            aria-label="description"
+          />
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-address"
+            type="text"
+            class="form-control"
+            placeholder="주소"
+            aria-label="address"
+          />
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-birthdate"
+            type="text"
+            class="form-control"
+            placeholder="생년월일"
+            aria-label="birthdate"
+          />
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-homepage"
+            type="text"
+            class="form-control"
+            placeholder="홈페이지"
+            aria-label="homepage_url"
+          />
+        </div>
+        <button id="submit-modal" type="button" class="btn btn-primary">
+          등록
+        </button>
+      </div>
+    </div>
+
+    <!-- 라벨 모달 -->
+    <div id="label-modal" class="modal_overlay">
+      <div class="modal_window_label">
+        <div class="modal_title">
+          <div class="modal_title_side"></div>
+          <div>새 라벨</div>
+          <div class="modal_title_side">
+            <button
+              id="label-modal-close"
+              type="button"
+              class="btn-close"
+              aria-label="Close"
+            ></button>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <input
+            id="modal-label"
+            type="text"
+            class="form-control"
+            placeholder="라벨 이름"
+            aria-label="label"
+          />
+        </div>
+        <button id="submit-label" type="button" class="btn btn-primary">
+          추가
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // 전화번호 validation
+      $("#modal-phonenumber").keydown(function (event) {
+        var key = event.charCode || event.keyCode || 0;
+        $text = $(this);
+        if (key !== 8 && key !== 9) {
+          if ($text.val().length === 3) {
+            $text.val($text.val() + "-");
+          }
+          if ($text.val().length === 8) {
+            $text.val($text.val() + "-");
+          }
+        }
+        return (
+          key == 8 ||
+          key == 9 ||
+          key == 46 ||
+          (key >= 48 && key <= 57) ||
+          (key >= 96 && key <= 105)
+        );
+      });
+      // contact modal 열기
+      $("#add-contact").on("click", function () {
+        $("#contact-modal").css({
+          display: "flex",
+        });
+      });
+      //  contact modal 닫기
+      $("#modal-close").on("click", function () {
+        closeModal("#contact-modal");
+      });
+      // label modal 열기
+      $("#add-label").on("click", function () {
+        $("#label-modal").css({
+          display: "flex",
+        });
+      });
+      //  label modal 닫기
+      $("#label-modal-close").on("click", function () {
+        closeModal("#label-modal");
+      });
+      // 라벨 추가 클릭
+      $("#submit-label").on("click", function () {
+        var labelName = $("#modal-label").val();
+        let data = new FormData();
+        data.append("name", labelName);
+        addLabel(data);
+      });
+      // 연락처 클릭
+      $("#contact-table tr").click(function () {
+        var tdArr = new Array();
+        var tr = $(this);
+        var td = tr.children();
+        var rowId = td.eq(0).text(); // contact_id
+        getContactItem(rowId);
+      });
+      //  연락처 등록 버튼 클릭
+      $("#submit-modal").on("click", function () {
+        var modalId = $("#modal-id").val();
+        var profile = $("#modal-profile").val();
+        var name = $("#modal-name").val();
+        var phoneNumber = $("#modal-phonenumber").val();
+        var email = $("#modal-email").val();
+        var company = $("#modal-company").val();
+        var jobTitle = $("#modal-jobtitle").val();
+        var memo = $("#modal-memo").val();
+        var address = $("#modal-address").val();
+        var homepage = $("#modal-homepage").val();
+        var birthDate = $("#modal-birthdate").val();
+        var labels = $("#label-div");
+        var labelItems = labels.children();
+        // console.log(labelItems);
+        var labelList = new Array();
+        labelItems.each(function (idx, value) {
+          labelId = $(this).attr("value");
+          labelList.push(labelId);
+        });
+
+        let data = new FormData();
+        data.append("id", modalId);
+        data.append("name", name);
+        data.append("profile_picture", profile);
+        data.append("phone_number", phoneNumber);
+        data.append("email", email);
+        data.append("company", company);
+        data.append("job_title", jobTitle);
+        if (memo) {
+          data.append("description", memo);
+        }
+        if (address) {
+          data.append("address", address);
+        }
+        if (birthDate) {
+          data.append("birth_date", birthDate);
+        }
+        if (homepage) {
+          data.append("homepage_url", homepage);
+        }
+        if (labelList.length > 0) {
+          // data.append("label", labelList);
+          labelList.forEach(function (item) {
+            data.append("label", item);
+          });
+        }
+
+        submitModal(data, modalId);
+      });
+      // 모달 창 닫기
+      function closeModal(modal) {
+        if (modal === "#contact-modal") {
+          console.log("contact modal close");
+          $("#modal-id").val("");
+          $("#modal-profile").val("");
+          $("#modal-name").val("");
+          $("#modal-email").val("");
+          $("#modal-phonenumber").val("");
+          $("#modal-company").val("");
+          $("#modal-jobtitle").val("");
+          $("#modal-address").val("");
+          $("#modal-memo").val("");
+          $("#modal-birthdate").val("");
+          $("#modal-homepage").val("");
+          $("#label-div").empty();
+        }
+        if (modal === "#label-modal") {
+          $("#modal-label").val("");
+        }
+        $(modal).css({
+          display: "none",
+        });
+      }
+      //   연락처 by id
+      function getContactItem(contactId) {
+        $.ajax({
+          url: `/api/v1/contacts/${contactId}`,
+          method: "GET",
+          processData: false,
+          contentType: false,
+          success: function (data) {
+            console.log(data);
+            openModal(data);
+            console.log("성공");
+          },
+          error: function (request, status, error) {
+            console.log("에러");
+          },
+        });
+      }
+      //   모달 열기
+      function openModal(data) {
+        // 기본 정보 넣기
+        $("#modal-id").val(data.id);
+        $("#modal-profile").val(data.profile_picture);
+        $("#modal-name").val(data.name);
+        $("#modal-email").val(data.email);
+        $("#modal-phonenumber").val(data.phone_number);
+        $("#modal-company").val(data.company);
+        $("#modal-jobtitle").val(data.job_title);
+        $("#modal-address").val(data.address);
+        $("#modal-memo").val(data.description);
+        $("#modal-birthdate").val(data.birth_date);
+        $("#modal-homepage").val(data.homepage_url);
+        $("#contact-modal").css({
+          display: "flex",
+        });
+        var labelBox = document.querySelector("#label-div");
+        let html = "";
+        data.label.forEach(function (labelItem) {
+          html = `<span class="mx-1 badge text-bg-warning"
+              style="font-weight: normal; margin-right: 2px" value=${labelItem.id}>${labelItem.name}</span>`;
+          labelBox.insertAdjacentHTML("beforeend", html);
+        });
+      }
+      //   연락처 등록 / 수정
+      function submitModal(data, modalId) {
+        if (modalId) {
+          // PUT
+          console.log("PUT");
+          $.ajax({
+            url: `/api/v1/contacts/${modalId}/template`,
+            data: data,
+            method: "PUT",
+            processData: false,
+            contentType: false,
+            success: function (data) {
+              console.log(data);
+              console.log("연락처 수정 성공");
+              closeModal("#contact-modal");
+              location.reload();
+            },
+            error: function (request, status, error) {
+              console.log("연락처 수정 에러");
+              if (request.responseJSON) {
+                if (request.responseJSON.profile_picture) {
+                  alert(request.responseJSON.profile_picture[0]);
+                }
+                if (request.responseJSON.non_field_errors) {
+                  alert(request.responseJSON.non_field_errors[0]);
+                }
+                if (request.responseJSON.birth_date) {
+                  alert(request.responseJSON.birth_date[0]);
+                }
+                if (request.responseJSON.homepage_url) {
+                  alert(request.responseJSON.homepage_url[0]);
+                }
+              } else if (request.responseText) {
+                alert(request.responseText);
+              } else {
+                alert("입력 정보를 다시 확인해주세요");
+              }
+            },
+            complete: function () {},
+          });
+        } else {
+          // POST
+          console.log("POST");
+          $.ajax({
+            url: `/api/v1/contacts/template`,
+            data: data,
+            method: "POST",
+            processData: false,
+            contentType: false,
+            success: function (data) {
+              console.log(data);
+              console.log("연락처 등록 성공");
+              closeModal("#contact-modal");
+              location.reload();
+            },
+            error: function (request, status, error) {
+              console.log("연락처 등록 에러");
+              if (request.responseJSON) {
+                if (request.responseJSON.profile_picture) {
+                  alert(request.responseJSON.profile_picture[0]);
+                }
+                if (request.responseJSON.non_field_errors) {
+                  alert(request.responseJSON.non_field_errors[0]);
+                }
+                if (request.responseJSON.birth_date) {
+                  alert(request.responseJSON.birth_date[0]);
+                }
+                if (request.responseJSON.homepage_url) {
+                  alert(request.responseJSON.homepage_url[0]);
+                }
+              } else if (request.responseText) {
+                alert(request.responseText);
+              } else {
+                alert("입력 정보를 다시 확인해주세요");
+              }
+            },
+            complete: function () {},
+          });
+        }
+      }
+      // 라벨 추가
+      function addLabel(data) {
+        $.ajax({
+          url: `/api/v1/contacts/labels`,
+          data: data,
+          method: "POST",
+          processData: false,
+          contentType: false,
+          success: function (data) {
+            console.log(data);
+            console.log("라벨 등록 성공");
+
+            let html = "";
+            html = `<span class="mx-1 badge text-bg-warning" style="font-weight: normal; margin-right: 2px" value=${data.id}>${data.name}</span>`;
+            console.log(html);
+            var labelBox = document.querySelector("#label-div");
+            labelBox.insertAdjacentHTML("beforeend", html);
+            console.log("****");
+          },
+          error: function (request, status, error) {
+            console.log("에러");
+            if (request.responseJSON) {
+              console.log(request.responseJSON.non_field_errors);
+            } else {
+              console.log(request.responseText);
+            }
+          },
+          complete: function (data) {
+            closeModal("#label-modal");
+          },
+        });
+      }
+    </script>
+  </body>
+  {% endblock %}
+</html>
