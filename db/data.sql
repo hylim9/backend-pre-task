@@ -16,7 +16,7 @@ INSERT INTO contact (
     updated_by
 ) 
 VALUES (
-    'https://oopy.lazyrockets.com/api/rest/cdn/image/0196375a-2c5d-4ccd-afd8-d5034cc2cbe0.png', 
+    'https://picsum.photos/300', 
     '임현영', 
     'test@gmail.com', 
     '010-1234-1234', 
